@@ -51,3 +51,18 @@ logs: `logs/fastqc_<jobid>_<task>.{out,err}`.
 | Tool | Version | Container | Resources per task |
 |---|---|---|---|
 | FastQC | 0.12.1 | `/containers/apptainer/fastqc-0.12.1.sif` | 2 CPU, 2 GB, 1 h (partition pshort_el8) |
+
+
+### 03 Combined QC report (MultiQC)
+```bash
+sbatch scripts/03_run_multiqc.sh
+```
+Combines the 30 FastQC reports (15 samples x 2 mates) into one report:
+`results/03_multiqc/multiqc_fastqc_raw.html` (+ `multiqc_fastqc_raw_data/` with the tables).
+Used to compare read numbers, per-base quality and adapter content across all samples.
+Single job (not an array), log: `logs/multiqc_<jobid>.{out,err}`.
+
+## Software and versions
+| Tool | Version | Container | Resources |
+|---|---|---|---|
+| MultiQC | 1.33 | `/containers/apptainer/multiqc-1.33.sif` | 1 CPU, 4 GB, 30 min (partition pshort_el8) |
