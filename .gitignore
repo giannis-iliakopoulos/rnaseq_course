@@ -1,0 +1,31 @@
+# Track code and documentation only - never data or rebuildable results
+
+# Raw reads: symlink to the course folder, never copied
+data/raw_data
+
+# Downloaded reference and files produced by scripts can be rebuilt
+data/external_data/
+data/processed_data/
+results/
+
+# SLURM logs stay on the cluster (folder kept via .gitkeep)
+logs/*
+!logs/.gitkeep
+
+# Large bioinformatics files, wherever they end up
+*.fastq.gz
+*.fq.gz
+*.sam
+*.bam
+*.bai
+*.fa
+*.fa.gz
+*.gtf.gz
+*.ht2
+*_fastqc.zip
+*_fastqc.html
+
+# R and editor clutter
+.Rhistory
+.RData
+.Rproj.user/
