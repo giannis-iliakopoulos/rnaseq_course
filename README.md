@@ -35,3 +35,19 @@ Data source: GEO GSE119855, downloaded by the course with `fasterq-dump --split-
 | WT uninfected (Control) | SRR7821968-970 | 3 |
 | DKO infected (Case) | SRR7821954-957 | 4 |
 | DKO uninfected (Control) | SRR7821971-973 | 3 |
+
+### 02 Read quality control (FastQC, SLURM job array)
+```bash
+sbatch --array=0 scripts/02_run_fastqc.sh      # test on one sample first
+sbatch --array=1-14 scripts/02_run_fastqc.sh   # remaining samples after the test succeeded
+```
+The test task was checked (`sacct`: COMPLETED 0:0, log shows FastQC v0.12.1,
+4 output files) before submitting the remaining tasks.
+Running `sbatch scripts/02_run_fastqc.sh` without `--array` processes all 15 samples at once.
+Output: `results/02_fastqc/<sample>_<1|2>_fastqc.{html,zip}`,
+logs: `logs/fastqc_<jobid>_<task>.{out,err}`.
+
+## Software and versions
+| Tool | Version | Container | Resources per task |
+|---|---|---|---|
+| FastQC | 0.12.1 | `/containers/apptainer/fastqc-0.12.1.sif` | 2 CPU, 2 GB, 1 h (partition pshort_el8) |
