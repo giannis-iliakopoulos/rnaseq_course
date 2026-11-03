@@ -21,4 +21,17 @@ Strand-specific paired-end reads, Illumina HiSeq 4000.
 Data, results and logs are not tracked by git (see `.gitignore`).
 
 ## Steps
-Work in progress - updated with every step.
+### 01 Link raw reads (login node)
+```bash
+bash scripts/01_link_reads.sh
+```
+Links `data/raw_data` to the course reads (blood, 15 paired-end samples),
+copies the sample metadata into `resources/` and writes `resources/samples.txt`.
+Data source: GEO GSE119855, downloaded by the course with `fasterq-dump --split-files`.
+
+| Group | Samples | n |
+|---|---|---|
+| WT infected (Case) | SRR7821949-953 | 5 |
+| WT uninfected (Control) | SRR7821968-970 | 3 |
+| DKO infected (Case) | SRR7821954-957 | 4 |
+| DKO uninfected (Control) | SRR7821971-973 | 3 |
