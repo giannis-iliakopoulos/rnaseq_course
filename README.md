@@ -94,15 +94,16 @@ Release and file names are recorded in `data/external_data/reference_info.txt`.
 | Mus_musculus.GRCm39.dna.primary_assembly.fa.gz | 16996 787519 |
 | Mus_musculus.GRCm39.116.gtf.gz | 42607 105329 |
 
-### 05 Build HISAT2 index (SLURM, ~3 h)
+### 05 Build HISAT2 index (SLURM, ~40 min)
 ```bash
 sbatch scripts/05_build_hisat2_index.sh
 ```
 Builds the HISAT2 index of the GRCm39 primary assembly (Ensembl 116) in
 `data/external_data/hisat2_index/` (index basename `GRCm39`, 8 files `GRCm39.1-8.ht2`).
-Runs on partition pibu_el8 (> 2 h).
+Submitted to partition pibu_el8 (course estimate ~3 h); the job completed in 38 min 44 s
+(COMPLETED 0:0) and all 8 index files were created.
 
 **Software:**
 | Tool | Version | Container | Resources |
 |---|---|---|---|
-| HISAT2 (hisat2-build) | see log | `/containers/apptainer/hisat2_samtools_408dfd02f175cd88.sif` | 1 CPU, 10 GB, 4 h (partition pibu_el8) |
+| HISAT2 (hisat2-build) | 2.2.1 | `/containers/apptainer/hisat2_samtools_408dfd02f175cd88.sif` | 1 CPU, 10 GB, 4 h (partition pibu_el8) |
