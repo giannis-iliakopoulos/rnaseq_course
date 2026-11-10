@@ -66,3 +66,16 @@ Single job (not an array), log: `logs/multiqc_<jobid>.{out,err}`.
 | Tool | Version | Container | Resources |
 |---|---|---|---|
 | MultiQC | 1.33 | `/containers/apptainer/multiqc-1.33.sif` | 1 CPU, 4 GB, 30 min (partition pshort_el8) |
+
+
+## QC results and decision
+Based on the FastQC and MultiQC reports (`results/03_multiqc/multiqc_fastqc_raw.html`):
+
+- **Reads per sample:** 18.8–34.2 M read pairs (mean 26.4 M, ≈395.7 M in total); mate 1 and mate 2 have identical read counts in all samples.
+- **Base quality:** mean Phred score > 30 at all positions in all 30 files (mostly 38–40), slightly lower in the first ~5 bases and the last bases; mates 1 and 2 have nearly identical profiles.
+- **Adapters:** < 1% in most files (max ~6% at the last positions); adapter dimers account for ~0.3% of all reads.
+- **Expected RNA-seq warnings:** per-base sequence content (random hexamer priming bias) and high duplication (58–92%; blood RNA is dominated by a few highly expressed transcripts). Duplicates were not removed (no UMIs).
+- **SRR7821956 (DKO infected)** stands out: two narrow peaks in the GC distribution (45% and 47% GC, ~5% of reads each), the highest duplication (~92%) and the largest fraction of overrepresented sequences (~7–10%). Its overall GC distribution is normal (~50%), so there is no sign of contamination; the peaks come from a few highly repeated sequences.
+
+**Decision (confirmed with the supervisor):** read quality is good and no trimming is needed; the raw reads are used for mapping.
+SRR7821956 is kept unchanged and re-checked after mapping (alignment rate, reads assigned to genes, PCA). Trimming or exclusion will only be considered if it performs clearly worse than the other samples.
