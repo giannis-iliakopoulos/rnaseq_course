@@ -79,3 +79,17 @@ Based on the FastQC and MultiQC reports (`results/03_multiqc/multiqc_fastqc_raw.
 
 **Decision (confirmed with the supervisor):** read quality is good and no trimming is needed; the raw reads are used for mapping.
 SRR7821956 is kept unchanged and re-checked after mapping (alignment rate, reads assigned to genes, PCA). Trimming or exclusion will only be considered if it performs clearly worse than the other samples.
+
+### 04 Download reference genome and annotation (login node)
+```bash
+bash scripts/04_download_reference.sh 2>&1 | tee logs/download_ref_loginnode.log
+```
+Downloads the mouse genome (GRCm39, primary assembly) and gene annotation (GTF) from **Ensembl release 116**
+into `data/external_data/`, verifies both with the Ensembl CHECKSUMS (`sum`; both OK) and unzips the genome for HISAT2.
+Run on the login node, because compute nodes have no internet access (downloading is not computationally heavy).
+Release and file names are recorded in `data/external_data/reference_info.txt`.
+
+| File | Checksum (`sum`) |
+|---|---|
+| Mus_musculus.GRCm39.dna.primary_assembly.fa.gz | 16996 787519 |
+| Mus_musculus.GRCm39.116.gtf.gz | 42607 105329 |
