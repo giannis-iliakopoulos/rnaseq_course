@@ -107,3 +107,60 @@ Submitted to partition pibu_el8 (course estimate ~3 h); the job completed in 38 
 | Tool | Version | Container | Resources |
 |---|---|---|---|
 | HISAT2 (hisat2-build) | 2.2.1 | `/containers/apptainer/hisat2_samtools_408dfd02f175cd88.sif` | 1 CPU, 10 GB, 4 h (partition pibu_el8) |
+
+### 06 Map reads to the genome (HISAT2 → samtools, SLURM job array)
+```bash
+sbatch --array=0 scripts/06_map_reads_hisat2.sh      # test on one sample first
+sbatch --array=1-14 scripts/06_map_reads_hisat2.sh   # remaining samples after the test succeeded
+```
+Maps each sample to GRCm39 (Ensembl 116) with HISAT2 using the strand setting for this
+reverse-stranded library (`--rna-strandness RF`). The HISAT2 output is piped directly into
+`samtools sort`, which writes a coordinate-sorted BAM and its index (`--write-index`), so no SAM
+or unsorted BAM file is ever stored. A `samtools quickcheck` verifies each BAM.
+- BAM files: `data/processed_data/bam/<sample>.sorted.bam` (+ `.bai`; not tracked by git)
+- HISAT2 alignment summaries: `results/06_mapping/<sample>.hisat2.summary.txt`
+- Logs: `logs/hisat2_map_<jobid>_<task>.{out,err}`
+
+The test task (SRR7821949) completed in 14 min with a peak memory of 22 GB (of 25 GB requested),
+so the memory request was raised to 32 GB for the remaining, partly larger samples.
+All 15 tasks completed (COMPLETED 0:0, 8–15 min each) and 15 BAM files were created.
+
+**Software:**
+| Tool | Version | Container | Resources per task |
+|---|---|---|---|
+| HISAT2 | 2.2.1 | `/containers/apptainer/hisat2_samtools_408dfd02f175cd88.sif` | 4 CPU, 32 GB, 4 h (partition pibu_el8) |
+| samtools | 1.20 | same container | same job; sort with 4 threads × 4 GB |
+
+### 07 Summarise the mapping statistics (login node)
+```bash
+bash scripts/07_summarise_mapping.sh 2>&1 | tee logs/summarise_mapping.log
+```
+Collects the HISAT2 summaries of all samples into one table:
+`results/06_mapping/alignment_summary.tsv` (total read pairs, % pairs aligned concordantly
+exactly once, % pairs aligned concordantly more than once, overall alignment rate).
+Light work, so it is run on the login node; the output is saved to `logs/summarise_mapping.log`.
+
+### Mapping results
+| Group | Samples | Overall alignment | Concordant, unique | Concordant, multimapped |
+|---|---|---|---|---|
+| WT infected | SRR7821949–953 | 95.6–97.0% | 85.0–86.2% | 7.1–7.7% |
+| WT control | SRR7821968–970 | 87.9–93.3% | 74.5–77.9% | 7.6–11.0% |
+| DKO infected | SRR7821954, 955, 957 | 87.9–90.7% | 74.3–76.1% | 7.6–8.0% |
+| DKO infected | **SRR7821956** | **83.1%** | **68.9%** | 8.4% |
+| DKO control | SRR7821971–973 | 90.2–94.0% | 75.7–82.1% | 8.1–9.7% |
+
+- **Alignment rates:** 83.1–97.0% overall in all samples; WT infected samples map best.
+- **Concordant alignment** means both mates of a pair map to the same chromosome, in the expected
+  orientation and at a plausible distance, as expected for a correctly aligned paired-end fragment.
+  69–86% of pairs aligned concordantly exactly once.
+- **Multimapped reads:** 7–11% of pairs aligned concordantly to more than one location
+  (e.g. gene families, repeats). They are not counted by featureCounts by default, so they do not
+  create false signal, but expression of genes with highly similar copies may be slightly underestimated.
+
+**Follow-up of SRR7821956** (flagged in QC; checked after mapping as agreed with the supervisor):
+this sample has the lowest overall alignment rate (83.1%) and the lowest fraction of uniquely,
+concordantly aligned pairs (68.9%, vs. 74–76% in the other DKO infected samples). Its multimapping
+rate is normal (8.4%), so the difference comes from unmapped reads, which is consistent with the
+adapter dimers and overrepresented sequences found in QC. With ~21.5 M uniquely and concordantly
+aligned pairs it still has more usable data than several other samples, so it is **kept**
+without trimming. It will be checked again in the PCA (does it cluster with the other DKO infected samples?).
