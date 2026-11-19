@@ -164,3 +164,49 @@ rate is normal (8.4%), so the difference comes from unmapped reads, which is con
 adapter dimers and overrepresented sequences found in QC. With ~21.5 M uniquely and concordantly
 aligned pairs it still has more usable data than several other samples, so it is **kept**
 without trimming. It will be checked again in the PCA (does it cluster with the other DKO infected samples?).
+
+### 08 Count read pairs per gene (featureCounts, SLURM)
+```bash
+sbatch scripts/08_count_features.sh
+```
+Counts read pairs (fragments) per gene for all 15 BAM files with featureCounts, using the
+Ensembl 116 GTF. Options: `-p --countReadPairs` (paired-end, one count per fragment),
+`-s 2` (reversely stranded library, matching HISAT2 `--rna-strandness RF`),
+`-t exon -g gene_id` (exon reads summed per Ensembl gene). Multimapping and multi-overlapping
+pairs are not counted (defaults). The job completed in 9 min 29 s (COMPLETED 0:0).
+- `results/08_featurecounts/gene_counts.txt` (+ `.summary`): full featureCounts output
+- `results/08_featurecounts/gene_counts_matrix.tsv`: DESeq2-ready matrix (gene ID + one column per sample;
+  first line and the Chr/Start/End/Strand/Length columns removed)
+
+**Software:**
+| Tool | Version | Container | Resources |
+|---|---|---|---|
+| featureCounts (Subread) | 2.0.6 | `/containers/apptainer/subread_2.0.6.sif` | 4 CPU, 4 GB, 1.5 h (partition pshort_el8) |
+
+### 09 Summarise read assignment (login node)
+```bash
+bash scripts/09_summarise_counts.sh 2>&1 | tee logs/summarise_counts.log
+```
+Turns the featureCounts summary into one row per sample: `results/08_featurecounts/assignment_summary.tsv`.
+Percentages are relative to the number of input read pairs (step 07), because featureCounts counts
+multimapping pairs once per alignment, which inflates the totals of its own summary.
+
+### Counting results
+| Group | Samples | Assigned to genes | Unassigned: ambiguity | Unassigned: no feature |
+|---|---|---|---|---|
+| WT infected | SRR7821949–953 | 76.8–77.7% | 2.3–2.7% | 9.6–10.5% |
+| WT control | SRR7821968–970 | 67.0–69.7% | 1.5–1.7% | 9.9–14.3% |
+| DKO infected | SRR7821954, 955, 957 | 64.7–67.2% | 1.6–1.8% | 14.2–15.4% |
+| DKO infected | **SRR7821956** | **59.5%** | 1.6% | 14.3% |
+| DKO control | SRR7821971–973 | 69.2–75.5% | 1.6–1.8% | 8.6–11.8% |
+
+- **Proportion of reads overlapping annotated genes:** 59.5–77.7% of read pairs were assigned to a gene.
+  Most of the remaining pairs are multimapped (not counted) or map outside annotated exons
+  (8.6–15.4%; introns of unspliced pre-mRNA, intergenic regions, unannotated transcripts).
+- **Unassigned due to ambiguity:** on average 498,878 read pairs per sample (1.9%; range 1.5–2.7%).
+  A pair is ambiguous when it overlaps more than one gene, e.g. overlapping or nested genes on the
+  same strand, genes sharing exons or UTRs, read-through transcripts, or mates falling on two
+  adjacent genes. Stranded counting (`-s 2`) separates genes on opposite strands, which keeps this fraction low.
+- **SRR7821956** again has the lowest value (59.5% assigned vs. 64.7–67.2% in the other DKO infected
+  samples), in line with its lower alignment rate. With 18.6 M assigned pairs (more than e.g. SRR7821969
+  with 13.1 M) it is kept; its position in the PCA is the final check.
